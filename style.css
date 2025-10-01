@@ -1,0 +1,112 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f7f6;
+    color: #333;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+.container {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px;
+}
+
+h1, h2 {
+    text-align: center;
+    color: #007bff;
+}
+
+.config-section {
+    background-color: #eaf4ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.config-section input, .config-section label, .config-section button {
+    margin: 5px;
+}
+
+.config-section button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.config-section button:hover {
+    background-color: #218838;
+}
+
+.game-area {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    margin-bottom: 30px;
+    gap: 15px;
+}
+
+.player-card {
+    background-color: #ffffff;
+    border: 2px solid #007bff;
+    border-radius: 10px;
+    padding: 15px;
+    width: 45%; /* สำหรับ 2 คอลัมน์ */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+.player-name {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 5px;
+}
+
+.player-credit {
+    font-size: 1.5em;
+    color: #dc3545; /* สีแดงสำหรับเครดิต */
+    font-weight: bold;
+}
+
+.action-area {
+    text-align: center;
+    border-top: 2px dashed #ccc;
+    padding-top: 20px;
+}
+
+.action-area p {
+    color: #6c757d;
+}
+
+.action-buttons button {
+    background-color: #ffc107;
+    color: #333;
+    border: none;
+    padding: 15px 25px;
+    margin: 5px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.action-buttons button:hover {
+    background-color: #e0a800;
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรแกรมเก็บเงินกลุ่ม</title>
+    <link rel="stylesheet" href="style.css"> 
+    <style>
+        /* เพิ่มสไตล์เล็กน้อยสำหรับส่วนตั้งชื่อ */
+        #playerNamesInput {
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px dashed #007bff;
+            border-radius: 5px;
+            width: 95%;
+        }
+        #playerNamesInput div {
+            margin-bottom: 5px;
+        }
+        #playerNamesInput input {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            width: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 โปรแกรมนุคัง 888 💰</h1>
+
+        <div class="config-section">
+            <h2>กำหนดเริ่มต้น</h2>
+            
+            <label for="initialAmount">เงินตั้งต้นต่อคน:</label>
+            <input type="number" id="initialAmount" value="1000" min="0">
+            
+            <label for="collectAmount">จำนวนเงินที่เก็บต่อครั้ง:</label>
+            <input type="number" id="collectAmount" value="100" min="1">
+            
+            <label for="numPlayers">จำนวนผู้เล่น (3-5):</label>
+            <input type="number" id="numPlayers" value="4" min="3" max="5" onchange="createNameInputs()">
+            
+            <div id="playerNamesInput">
+                </div>
+            
+            <button onclick="initializeGame()">เริ่มเกม / ตั้งค่าใหม่</button>
+        </div>
+
+        <div id="game-area" class="game-area">
+            </div>
+
+        <div id="action-area" class="action-area">
+            <h2>💸 กดปุ่มเพื่อเก็บเงิน 💸</h2>
+            <p>ผู้เล่นที่ถูกเลือก จะได้เงินรวมจากคนอื่น โดยคนอื่นถูกหักตามจำนวนที่กำหนด</p>
+            </div>
+
+		
+<div id="action-area" class="action-area">
+      
+            
+            <button id="undoButton" onclick="undoLastAction()" disabled style="background-color: #ff3838; color: white; padding: 10px; margin-bottom: 15px; border-radius: 5px;">
+                ย้อนกลับ (Undo)
+            </button>
+             <p> version 1.0 </p>
+            <div class="action-buttons">
+                </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script> 
+</body>
+</html>
