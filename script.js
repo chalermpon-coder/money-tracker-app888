@@ -1,14 +1,14 @@
-let players = []; // เก็บข้อมูลผู้เล่น
-let history = []; // เก็บประวัติสถานะเครดิตของผู้เล่นแต่ละครั้งที่มีการกดเก็บเงิน
-
-// จำกัดจำนวนประวัติที่เก็บไว้เพื่อไม่ให้เปลืองหน่วยความจำมากเกินไป
+let players = []; 
+let history = []; 
+let transactionLog = []; // NEW: อาร์เรย์ใหม่สำหรับเก็บรายการธุรกรรม
 const MAX_HISTORY = 20; 
+
+// --- ฟังก์ชันเกี่ยวกับการจัดการ History (Undo) ---
 
 /**
  * บันทึกสถานะเครดิตปัจจุบันลงในประวัติ
  */
 function saveStateToHistory() {
-    // โคลนอาร์เรย์ players และ credit เพื่อไม่ให้ข้อมูลอ้างอิงกัน
     const currentState = players.map(player => ({
         id: player.id,
         name: player.name,
@@ -17,9 +17,8 @@ function saveStateToHistory() {
     
     history.push(currentState);
 
-    // จำกัดจำนวนประวัติ
     if (history.length > MAX_HISTORY) {
-        history.shift(); // ลบสถานะที่เก่าที่สุดออก
+        history.shift(); 
     }
     
     updateUndoButtonState();
@@ -30,26 +29,25 @@ function saveStateToHistory() {
  */
 function undoLastAction() {
     if (history.length > 1) {
-        // ลบสถานะปัจจุบันทิ้ง (ซึ่งเป็นสถานะก่อนหน้าที่จะกด undo)
         history.pop(); 
         
-        // ดึงสถานะที่เหลือล่าสุดใน history มาใช้ (คือสถานะก่อนการกระทำล่าสุด)
+        // NEW: ลบรายการล่าสุดออกจาก transactionLog ด้วย
+        transactionLog.pop();
+        
         const previousState = history[history.length - 1];
         
-        // อัปเดตอาร์เรย์ players ด้วยสถานะย้อนหลัง
         players = previousState.map(state => ({
             id: state.id,
             name: state.name,
             credit: state.credit
         }));
 
-        // อัปเดตการแสดงผล
         renderPlayers(); 
+        renderHistoryLog(); // NEW: เรียกแสดง Log ใหม่
         console.log("ย้อนกลับการกระทำล่าสุดแล้ว");
 
     } else if (history.length === 1) {
-        // หากเหลือสถานะเดียว ให้กลับไปที่สถานะเริ่มต้น และล้าง history 
-        initializeGame(false); // ใช้ false เพื่อไม่ให้บันทึกสถานะเริ่มต้นซ้ำ
+        initializeGame(false); 
     } else {
         alert("ไม่สามารถย้อนกลับได้อีก");
     }
@@ -62,13 +60,54 @@ function undoLastAction() {
  */
 function updateUndoButtonState() {
     const undoButton = document.getElementById('undoButton');
-    // เปิดใช้งานปุ่มถ้ามีประวัติที่สามารถย้อนกลับได้มากกว่า 1 สถานะ 
-    // (history[0] คือสถานะเริ่มต้น)
     undoButton.disabled = history.length <= 1;
 }
 
+// --- NEW: ฟังก์ชันการจัดการ Log และการแสดงผล ---
+
 /**
- * สร้างช่อง Input สำหรับตั้งชื่อผู้เล่น ตามจำนวนผู้เล่นที่กำหนด
+ * เพิ่มรายการธุรกรรมใหม่เข้า Log
+ * @param {string} type - 'group' หรือ 'manual'
+ * @param {string} description - รายละเอียดการทำรายการ
+ */
+function addTransactionToLog(type, description) {
+    const timestamp = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    
+    transactionLog.push({
+        type: type === 'manual' ? 'manual-payment' : 'group-collect',
+        timestamp: timestamp,
+        description: description
+    });
+    
+    renderHistoryLog();
+}
+
+/**
+ * แสดงรายการธุรกรรมทั้งหมดใน UI
+ */
+function renderHistoryLog() {
+    const historyList = document.getElementById('historyList');
+    historyList.innerHTML = '';
+    
+    // แสดงรายการย้อนหลัง (รายการล่าสุดอยู่บนสุด)
+    for (let i = transactionLog.length - 1; i >= 0; i--) {
+        const item = transactionLog[i];
+        const li = document.createElement('li');
+        
+        li.className = item.type;
+        li.innerHTML = `
+            [${item.timestamp}] ${item.description}
+        `;
+        
+        historyList.appendChild(li);
+    }
+}
+
+
+// --- ฟังก์ชันเกี่ยวกับการตั้งค่าและการแสดงผล (ส่วนที่เหลือยังคงเหมือนเดิม) ---
+
+/**
+ * สร้างช่อง Input สำหรับตั้งชื่อผู้เล่น
  */
 function createNameInputs() {
     const numPlayers = parseInt(document.getElementById('numPlayers').value) || 0;
@@ -91,11 +130,36 @@ function createNameInputs() {
 }
 
 /**
+ * สร้างเมนู Dropdown ผู้จ่าย/ผู้รับ สำหรับฟังก์ชันจ่ายพิเศษ
+ */
+function createPaymentSelects() {
+    const payerSelect = document.getElementById('payerSelect');
+    const payeeSelect = document.getElementById('payeeSelect');
+    
+    // เคลียร์รายการเดิม
+    payerSelect.innerHTML = '';
+    payeeSelect.innerHTML = '';
+
+    players.forEach(player => {
+        // สร้าง Option สำหรับผู้จ่าย
+        const payerOption = document.createElement('option');
+        payerOption.value = player.id;
+        payerOption.textContent = player.name;
+        payerSelect.appendChild(payerOption);
+
+        // สร้าง Option สำหรับผู้รับ
+        const payeeOption = document.createElement('option');
+        payeeOption.value = player.id;
+        payeeOption.textContent = player.name;
+        payeeSelect.appendChild(payeeOption);
+    });
+}
+
+
+/**
  * เริ่มต้น/ตั้งค่าเกมใหม่
- * @param {boolean} resetHistory - กำหนดว่าควรล้างประวัติหรือไม่ (ควรเป็น true เมื่อกดปุ่ม "เริ่มเกม")
  */
 function initializeGame(resetHistory = true) {
-    // ดึงค่าตั้งต้นและจำนวนผู้เล่น
     const initialAmount = parseInt(document.getElementById('initialAmount').value) || 0;
     const numPlayers = parseInt(document.getElementById('numPlayers').value) || 3;
     
@@ -105,11 +169,10 @@ function initializeGame(resetHistory = true) {
     }
 
     if (resetHistory) {
-        // ตั้งค่าข้อมูลผู้เล่นใหม่ทั้งหมด
         history = []; 
+        transactionLog = []; // NEW: ล้าง Log ด้วย
         players = [];
         for (let i = 0; i < numPlayers; i++) {
-            // ดึงชื่อจากช่อง Input
             const playerNameInput = document.getElementById(`pName${i}`);
             const name = playerNameInput ? playerNameInput.value : `ผู้เล่น ${i + 1}`;
 
@@ -121,12 +184,11 @@ function initializeGame(resetHistory = true) {
         }
     }
     
-    // บันทึกสถานะเริ่มต้น
     saveStateToHistory();
-
-    // แสดงผล
     renderPlayers();
     renderActionButtons();
+    createPaymentSelects(); 
+    renderHistoryLog(); // NEW: แสดง Log หลังการเริ่มต้น
 }
 
 /**
@@ -134,7 +196,7 @@ function initializeGame(resetHistory = true) {
  */
 function renderPlayers() {
     const gameArea = document.getElementById('game-area');
-    gameArea.innerHTML = ''; // เคลียร์ของเก่า
+    gameArea.innerHTML = ''; 
 
     players.forEach(player => {
         const card = document.createElement('div');
@@ -163,7 +225,7 @@ function renderActionButtons() {
         actionArea.appendChild(buttonDiv);
     }
     
-    buttonDiv.innerHTML = ''; // เคลียร์ปุ่มเก่า
+    buttonDiv.innerHTML = ''; 
 
     players.forEach(player => {
         const button = document.createElement('button');
@@ -172,13 +234,13 @@ function renderActionButtons() {
         buttonDiv.appendChild(button);
     });
     
-    // อัปเดตสถานะปุ่ม Undo ด้วย
     updateUndoButtonState(); 
 }
 
+// --- ฟังก์ชันสำหรับตรรกะของเกม ---
+
 /**
- * จัดการตรรกะการเก็บเงิน
- * @param {number} winnerId - ID ของผู้เล่นที่ถูกกดปุ่ม (ผู้ที่ได้รับเงิน)
+ * จัดการตรรกะการเก็บเงินแบบกลุ่ม
  */
 function collectMoney(winnerId) {
     const collectAmount = parseInt(document.getElementById('collectAmount').value) || 0;
@@ -191,39 +253,65 @@ function collectMoney(winnerId) {
     const numOthers = players.length - 1;
     if (numOthers <= 0) return; 
 
-    // ผู้ชนะได้รับเงินรวมจากทุกคน
     const winnerReceiveAmount = collectAmount * numOthers; 
+    const winnerName = players.find(p => p.id === winnerId).name;
+    let payersList = [];
 
-    // อัปเดตเครดิต
+    // อัปเดตเครดิต 
     players.forEach(player => {
-        let updateAmount = 0;
-        
         if (player.id === winnerId) {
-            updateAmount = winnerReceiveAmount;
+            player.credit += winnerReceiveAmount;
         } else {
-            updateAmount = -collectAmount; 
-        }
-
-        player.credit += updateAmount;
-        
-        // อัปเดตการแสดงผลเครดิต
-        const creditDisplay = document.getElementById(`credit-${player.id}`);
-        // ใช้ Math.round() เพื่อปัดเศษทศนิยม
-        creditDisplay.textContent = `${Math.round(player.credit).toLocaleString()} ฿`;
-        
-        // อัปเดตสีตามสถานะเครดิต
-        if (player.credit < 0) {
-             creditDisplay.style.color = '#dc3545';
-        } else {
-             creditDisplay.style.color = '#007bff';
+            player.credit -= collectAmount; 
+            payersList.push(player.name);
         }
     });
 
-    // **บันทึกสถานะใหม่เข้า History**
-    saveStateToHistory(); 
+    // บันทึก Log และสถานะใหม่
+    const description = `${winnerName} ได้รับ ${winnerReceiveAmount.toLocaleString()} ฿ (จากทุกคนจ่ายคนละ ${collectAmount.toLocaleString()} ฿)`;
+    addTransactionToLog('group', description); // NEW: บันทึก Log
     
-    console.log(`เงินถูกเก็บ: ${collectAmount} บาท/คน. ${players[winnerId].name} ได้รับรวม ${winnerReceiveAmount} บาท`);
+    saveStateToHistory(); 
+    renderPlayers(); 
 }
+
+/**
+ * จัดการตรรกะการจ่ายพิเศษ (โอนเงิน)
+ */
+function handleManualPayment() {
+    const payerId = parseInt(document.getElementById('payerSelect').value);
+    const payeeId = parseInt(document.getElementById('payeeSelect').value);
+    const amount = parseInt(document.getElementById('manualAmount').value) || 0;
+
+    if (payerId === payeeId) {
+        alert("ผู้จ่ายและผู้รับต้องไม่เป็นคนเดียวกัน");
+        return;
+    }
+
+    if (amount <= 0) {
+        alert("กรุณากำหนดจำนวนเงินที่ถูกต้อง");
+        return;
+    }
+
+    const payer = players.find(p => p.id === payerId);
+    const payee = players.find(p => p.id === payeeId);
+
+    if (payer && payee) {
+        payer.credit -= amount; 
+        payee.credit += amount; 
+        
+        // บันทึก Log และสถานะใหม่
+        const description = `${payer.name} โอนเงิน ${amount.toLocaleString()} ฿ ให้ ${payee.name}`;
+        addTransactionToLog('manual', description); // NEW: บันทึก Log
+        
+        saveStateToHistory();
+        renderPlayers();
+
+    } else {
+        alert("ไม่พบข้อมูลผู้เล่น");
+    }
+}
+
 
 // เมื่อโหลดหน้าเว็บ: สร้างช่องกรอกชื่อเริ่มต้น และเริ่มเกม
 window.onload = () => {

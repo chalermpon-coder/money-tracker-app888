@@ -66,8 +66,37 @@
             <div class="action-buttons">
                 </div>
         </div>
-    </div>
 
+        <div class="manual-payment-section">
+            <h2>💸 โอนเงิน/จ่ายพิเศษ (Manual Payment)</h2>
+            <p>กำหนดผู้จ่าย, ผู้รับ, และจำนวนเงินที่โอน</p>
+
+            <div class="payment-controls">
+                <label for="payerSelect">ผู้จ่าย:</label>
+                <select id="payerSelect"></select>
+                
+                <label for="payeeSelect">ผู้รับ:</label>
+                <select id="payeeSelect"></select>
+                
+                <label for="manualAmount">จำนวนเงิน:</label>
+                <input type="number" id="manualAmount" value="100" min="1" style="width: 80px;">
+                
+                <button onclick="handleManualPayment()">ยืนยันการจ่าย</button>
+            </div>
+        </div>
+        <div id="game-area" class="game-area">
+            </div>
+    </div>
+   <div class="history-log-section">
+            <h2>📜 ประวัติการทำรายการ</h2>
+            <ul id="historyList">
+                </ul>
+        </div>
+        </div> <script src="script.js"></script> 
+</body>
+</html>
     <script src="script.js"></script> 
+
+    
 </body>
 </html>
